@@ -131,10 +131,11 @@ void copyVector2Array(const std::vector<char *> &lines, const char **arr)
     arr[lines.size()] = nullptr;
 }
 int replaceCount;
+const char* externalAssembliesTxT = "/external.txt";
 void il2cpp_set_data_dir(const char *data_path)
 {
     // Load external assemblies
-    const char *filePath = hybridclr::ConcatNewString(data_path, hybridclr::externalAssembliesTxT);
+    const char *filePath = hybridclr::ConcatNewString(data_path, externalAssembliesTxT);
     std::ifstream file(filePath);
     std::vector<char *> lines;
     if (file.is_open())
