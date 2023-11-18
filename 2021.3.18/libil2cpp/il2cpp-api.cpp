@@ -42,17 +42,18 @@
 #include "gc/GCHandle.h"
 #include "gc/WriteBarrierValidation.h"
 
-#include <locale.h>
-#include <fstream>
-#include <string>
-
+#pragma region Modding Support
 #include "hybridclr/Il2CppCompatibleDef.h";
 #include "hybridclr/CommonDef.h";
 #include "utils/StringUtils.h"
-
 #include <iostream>
 #include <vector>
 #include <cstring>
+#pragma endregion
+
+#include <locale.h>
+#include <fstream>
+#include <string>
 
 using namespace il2cpp::vm;
 using il2cpp::utils::Memory;
@@ -120,6 +121,9 @@ void il2cpp_set_config_dir(const char *config_path)
 {
     il2cpp::vm::Runtime::SetConfigDir(config_path);
 }
+#pragma region Modding Support
+
+int replaceCount;
 
 void copyVector2Array(const std::vector<char *> &lines, const char **arr)
 {
@@ -130,13 +134,8 @@ void copyVector2Array(const std::vector<char *> &lines, const char **arr)
     }
     arr[lines.size()] = nullptr;
 }
-int replaceCount;
-const char* externalAssembliesTxT = "/external.txt";
-void il2cpp_set_data_dir(const char *data_path)
+void loadExternalFromStream(std::ifstream &file)
 {
-    // Load external assemblies
-    const char *filePath = hybridclr::ConcatNewString(data_path, externalAssembliesTxT);
-    std::ifstream file(filePath);
     std::vector<char *> lines;
     if (file.is_open())
     {
@@ -151,10 +150,34 @@ void il2cpp_set_data_dir(const char *data_path)
         file.close();
     }
     copyVector2Array(lines, hybridclr::g_placeHolderAssemblies);
-    const char **assemblies = hybridclr::g_placeHolderAssemblies;
-    il2cpp::utils::Runtime::SetDataDir(data_path);
 }
 
+#if IL2CPP_TARGET_ANDROID
+void loadExternalAndroid()
+{
+    std::ifstream file("/storage/emulated/0/Android/data/com.AkiKurisu.IL2CPP_Mod/external.txt");
+    loadExternalFromStream(file);
+}
+#endif // IL2CPP_TARGET_ANDROID
+
+void loadExternalWin(const char *data_path)
+{
+    const char *filePath = hybridclr::ConcatNewString(data_path, "/external.txt");
+    std::ifstream file(filePath);
+    loadExternalFromStream(file);
+}
+
+void il2cpp_set_data_dir(const char *data_path)
+{
+    // Load external assemblies
+#if IL2CPP_TARGET_ANDROID
+    loadExternalAndroid();
+#else
+    loadExternalWin(data_path);
+#endif
+    il2cpp::utils::Runtime::SetDataDir(data_path);
+}
+#pragma endregion
 void il2cpp_set_temp_dir(const char *temp_dir)
 {
     il2cpp::vm::Path::SetTempPath(temp_dir);
@@ -596,8 +619,14 @@ const Il2CppAssembly *il2cpp_domain_assembly_open(Il2CppDomain *domain, const ch
         char *modifiedName = const_cast<char *>(name);
         const char *nameWithExtension = hybridclr::ConcatNewString(hybridclr::g_placeHolderAssemblies[replaceCount], ".dll");
         size_t length = strlen(nameWithExtension) + 1;
+#if IL2CPP_COMPILER_MSVC
         strcpy_s(modifiedName, length, nameWithExtension);
-        il2cpp::utils::StringUtils::StringDelete(nameWithExtension);
+#elif IL2CPP_TARGET_LINUX
+        strncpy(modifiedName, nameWithExtension, length);
+#else
+        strlcpy(modifiedName, nameWithExtension, length);
+#endif
+        IL2CPP_FREE((void *)nameWithExtension);
     }
     return Assembly::Load(name);
 }
