@@ -105,7 +105,7 @@ namespace HybridCLR.Editor.BuildProcessors
                 var list = new List<string>(SettingsUtil.HotUpdateAssemblyFilesIncludePreserved);
                 for (int i = 0; i < 100; ++i)
                 {
-                    list.Add($"Dummy.Dummy.Dummy{i}.dll");
+                    list.Add($"Dummy.AssemblyPlaceHolderForMod{i}.dll");
                 }
                 patcher.AddScriptingAssemblies(list);
                 patcher.Save(file);

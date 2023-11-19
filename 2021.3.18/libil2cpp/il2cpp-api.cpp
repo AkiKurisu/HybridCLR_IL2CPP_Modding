@@ -608,7 +608,6 @@ bool startsWith(const char *str, const char *prefix)
     }
     return std::strncmp(str, prefix, prefixLen) == 0;
 }
-
 const Il2CppAssembly *il2cpp_domain_assembly_open(Il2CppDomain *domain, const char *name)
 {
     // Replace dummy assembly
@@ -616,16 +615,25 @@ const Il2CppAssembly *il2cpp_domain_assembly_open(Il2CppDomain *domain, const ch
     {
         --replaceCount;
         char *modifiedName = const_cast<char *>(name);
+        size_t originalLength = strlen(modifiedName) + 1;
         const char *nameWithExtension = hybridclr::ConcatNewString(hybridclr::g_placeHolderAssemblies[replaceCount], ".dll");
         size_t length = strlen(nameWithExtension) + 1;
+        // Place holder should be larger than runtime replaced assembly since we can not reallocate char array or assign char* to static array in engine code
+        if (originalLength >= length)
+        {
 #if IL2CPP_COMPILER_MSVC
-        strcpy_s(modifiedName, length, nameWithExtension);
+            strcpy_s(modifiedName, length, nameWithExtension);
 #elif IL2CPP_TARGET_LINUX
-        strncpy(modifiedName, nameWithExtension, length);
+            strncpy(modifiedName, nameWithExtension, length);
 #else
-        strlcpy(modifiedName, nameWithExtension, length);
+            strlcpy(modifiedName, nameWithExtension, length);
 #endif
-        IL2CPP_FREE((void *)nameWithExtension);
+            for (int i = length; i < originalLength; ++i)
+            {
+                modifiedName[i] = '\0';
+            }
+            IL2CPP_FREE((void *)nameWithExtension);
+        }
     }
     return Assembly::Load(name);
 }
