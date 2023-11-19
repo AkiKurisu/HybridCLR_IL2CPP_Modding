@@ -125,7 +125,7 @@ void il2cpp_set_config_dir(const char *config_path)
 
 int replaceCount;
 
-void copyVector2Array(const std::vector<char *> &lines, const char **arr)
+void copyVector2Array(const std::vector<const char *> &lines, const char **arr)
 {
     int size = lines.size();
     for (size_t i = 0; i < size; ++i)
@@ -136,14 +136,13 @@ void copyVector2Array(const std::vector<char *> &lines, const char **arr)
 }
 void loadExternalFromStream(std::ifstream &file)
 {
-    std::vector<char *> lines;
+    std::vector<const char *> lines;
     if (file.is_open())
     {
         std::string line;
         while (std::getline(file, line))
         {
-            char *linePtr = new char[line.length() + 1];
-            std::strcpy(linePtr, line.c_str());
+            const char *linePtr = hybridclr::CopyString(line.c_str());
             lines.push_back(linePtr);
             ++replaceCount;
         }
@@ -155,7 +154,7 @@ void loadExternalFromStream(std::ifstream &file)
 #if IL2CPP_TARGET_ANDROID
 void loadExternalAndroid()
 {
-    std::ifstream file("/storage/emulated/0/Android/data/com.AkiKurisu.IL2CPP_Mod/external.txt");
+    std::ifstream file("/storage/emulated/0/Android/data/com.CompanyName.ProductName/files/external.txt");
     loadExternalFromStream(file);
 }
 #endif // IL2CPP_TARGET_ANDROID
