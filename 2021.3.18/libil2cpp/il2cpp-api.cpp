@@ -45,15 +45,10 @@
 #pragma region Modding Support
 #include "hybridclr/Il2CppCompatibleDef.h";
 #include "hybridclr/CommonDef.h";
-#include "utils/StringUtils.h"
-#include <iostream>
 #include <vector>
-#include <cstring>
-#pragma endregion
-
-#include <locale.h>
 #include <fstream>
-#include <string>
+#include <codecvt>
+#pragma endregion
 
 using namespace il2cpp::vm;
 using il2cpp::utils::Memory;
@@ -161,7 +156,10 @@ void loadExternalAndroid()
 
 void loadExternalWin(const char *data_path)
 {
-    const char *filePath = hybridclr::ConcatNewString(data_path, "/external.txt");
+    // Convert to UTF-8
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+    std::wstring wdata_path = converter.from_bytes(data_path);
+    std::wstring filePath = wdata_path + L"/external.txt";
     std::ifstream file(filePath);
     loadExternalFromStream(file);
 }
@@ -594,7 +592,7 @@ Il2CppDomain *il2cpp_domain_get()
 {
     return Domain::GetCurrent();
 }
-
+#pragma region Modding Support
 const char *Dummy = "Dummy";
 
 bool startsWith(const char *str, const char *prefix)
@@ -637,6 +635,7 @@ const Il2CppAssembly *il2cpp_domain_assembly_open(Il2CppDomain *domain, const ch
     }
     return Assembly::Load(name);
 }
+#pragma endregion
 
 const Il2CppAssembly **il2cpp_domain_get_assemblies(const Il2CppDomain *domain, size_t *size)
 {
