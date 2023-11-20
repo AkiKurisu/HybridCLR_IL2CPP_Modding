@@ -1,20 +1,25 @@
 # HybridCLR IL2CPP Plus Modding Support
 
-Modify engine internal assemblies table deserialized from `ScriptingAssemblies.json` by replacing dummy assembly name, so you can load other assembly dynamically without need to add them in json before build. 
+Modify engine assemblies table deserialized from `ScriptingAssemblies.json` by replacing dummy assembly name, so you can load other assembly dynamically without need to add them in json before build. 
+
+This repo is target to game programmer who want to use IL2CPP while supporting mod.
+
+## Dependency
+HybridCLR
 
 ## How to use
 Since support C# modding for IL2CPP is not HybridCLR designed for, you should do some work to make it come true:
-1. Replace `Editor\BuildProcessors\PatchScriptingAssemblyList.cs` of HybridCLR unity package to pre-add mod assemblies place holder
+1. Replace `Editor\BuildProcessors\PatchScriptingAssemblyList.cs` of HybridCLR unity package to pre-add mod assembly place holders
 2. Hardcode external assemblies info path in `il2cpp-api.cpp` (eg. `{PersistentDataPath}/external.txt`)
 3. Write your mod assemblies name to info file (eg. ``Kurisu.Mod.Test``, do not add suffix which should be ``.dll.bytes``)
 
 ## Support platform
-Currently it can support modding for Window and Android.
+Currently it can support modding for Windows and Android.
 
 ## Else you should do
 
 1. Do aot pre-process in your game source code for preventing generic stripping problem in mod assemblies (also providing mod interface access to game api is better than let modder use reflection since it may cause problem above)
-2. Mod assembly name should smaller than placeholder name (currently maximum is 36, can be changed in `PatchScriptingAssemblyList.cs`)
+2. Mod assembly's name should smaller than placeholder's name (currently maximum is 36, can be changed in `PatchScriptingAssemblyList.cs`)
 3. Assembly not contained Monobehaviour, ScriptableObject and ManagedReference do not need to be added to ``external.txt``.
 4. If new mod is added or removed, ``external.txt`` should be modified before game loading. You can make a re-launch dialog box after user loads mod for first time.
 
